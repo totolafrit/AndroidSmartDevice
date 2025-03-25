@@ -115,32 +115,48 @@ fun ScanScreen(
 
 @Composable
 fun BLEDeviceItem(device: BLEDevice, onClick: () -> Unit) {
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
-        Surface(
-            color = Color(0xFF1976D2),
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.size(48.dp)
+        Row(
+            modifier = Modifier
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(contentAlignment = Alignment.Center) {
+            Surface(
+                color = Color(0xFF1976D2),
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "${device.rssi}dB",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column {
                 Text(
-                    text = device.rssi.toString(),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    text = device.name,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF212121)
+                )
+                Text(
+                    text = device.address,
+                    fontSize = 14.sp,
+                    color = Color.Gray
                 )
             }
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column {
-            Text(device.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Text(device.address, fontSize = 14.sp, color = Color.Gray)
         }
     }
 }
