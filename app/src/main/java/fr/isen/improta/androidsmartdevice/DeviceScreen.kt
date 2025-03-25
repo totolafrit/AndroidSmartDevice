@@ -24,9 +24,13 @@ fun DeviceScreen(
     isConnected: Boolean,
     ledStates: List<Boolean>,
     onLedToggle: (Int) -> Unit,
-    isSubscribed: Boolean,
-    onSubscribeToggle: (Boolean) -> Unit,
-    counter: Int
+    isSubscribedButton1: Boolean,
+    isSubscribedButton3: Boolean,
+    onSubscribeToggleButton1: (Boolean) -> Unit,
+    onSubscribeToggleButton3: (Boolean) -> Unit,
+    counterButton1: Int,
+    counterButton3: Int,
+    onResetCounter: () -> Unit
 ) {
     val ledColors = listOf(
         Color(0xFF1976D2), // LED 1 - Bleu
@@ -58,19 +62,39 @@ fun DeviceScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (!isConnected) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text("Connexion à :", fontSize = 20.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("Adresse : $address", fontSize = 14.sp)
-                Text("RSSI : $rssi dBm", fontSize = 14.sp)
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(connectionStatus, fontSize = 14.sp, color = Color.Gray)
-                Spacer(modifier = Modifier.height(24.dp))
-                Button(onClick = onConnectClick) {
-                    Text("Se connecter")
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Text("🔌 Périphérique détecté", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1976D2))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("📡 Nom : $name", fontSize = 16.sp)
+                        Text("🔑 Adresse : $address", fontSize = 14.sp, color = Color.Gray)
+                        Text("📶 RSSI : $rssi dBm", fontSize = 14.sp, color = Color.Gray)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("⚠️ $connectionStatus", fontSize = 14.sp, color = Color(0xFFB71C1C))
+                    }
                 }
-            } else {
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Button(
+                    onClick = onConnectClick,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
+                ) {
+                    Text("Se connecter", color = Color.White, fontSize = 16.sp)
+                }
+            }
+            else {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("Votre Sapin De Noël", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1976D2))
                 Spacer(modifier = Modifier.height(24.dp))
@@ -92,37 +116,54 @@ fun DeviceScreen(
                                 ),
                                 modifier = Modifier
                                     .height(64.dp)
-                                    .width(100.dp) // un peu plus large
+                                    .width(100.dp)
                             ) {
                                 Text(
                                     text = "LED ${index + 1}",
                                     color = Color.White,
-                                    maxLines = 1 // 👈 empêche retour à la ligne
+                                    maxLines = 1
                                 )
                             }
-
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // ✅ Abonnements séparés
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        "Abonnez vous pour recevoir\nle nombre d'incrémentation",
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
                     Checkbox(
-                        checked = isSubscribed,
-                        onCheckedChange = { onSubscribeToggle(it) }
+                        checked = isSubscribedButton3,
+                        onCheckedChange = { onSubscribeToggleButton3(it) }
                     )
-                    Text("RECEVOIR")
+                    Text("Abonnement notif bouton 1")
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = isSubscribedButton1,
+                        onCheckedChange = { onSubscribeToggleButton1(it) }
+                    )
+                    Text("Abonnement notif bouton 3")
                 }
 
+
+
                 Spacer(modifier = Modifier.height(24.dp))
-                Text("Nombre : $counter", fontSize = 20.sp)
+                Text("Compteur bouton 1 : $counterButton3", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Compteur bouton 3 : $counterButton1", fontSize = 16.sp)
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = onResetCounter) {
+                    Text("Réinitialiser les compteurs")
+                }
             }
         }
     }
