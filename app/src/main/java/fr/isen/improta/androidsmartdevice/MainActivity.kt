@@ -1,6 +1,12 @@
 package fr.isen.improta.androidsmartdevice
 
+import android.app.Activity
+import android.app.AlertDialog
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import android.content.Intent
+import android.location.LocationManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,13 +41,14 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun HomeScreen() {
     val context = LocalContext.current
+    val activity = context as? Activity
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("AndroidSmartDevice") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1976D2), // Bleu
+                    containerColor = Color(0xFF1976D2),
                     titleContentColor = Color.White
                 )
             )
@@ -52,10 +59,10 @@ fun HomeScreen() {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(12.dp),
-            verticalArrangement = Arrangement.Top, // Remonte le contenu
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(60.dp)) // Décale un peu sous la top bar
+            Spacer(modifier = Modifier.height(60.dp))
 
             Text(
                 text = "Bienvenue dans votre application\nSmart Device",
@@ -82,11 +89,31 @@ fun HomeScreen() {
                 modifier = Modifier.size(160.dp)
             )
 
-            Spacer(modifier = Modifier.height(130.dp))
+            Spacer(modifier = Modifier.height(110.dp))
 
             Button(
                 onClick = {
-                    context.startActivity(Intent(context, ScanActivity::class.java))
+                    val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+                    val bluetoothAdapter = bluetoothManager.adapter
+
+                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                    val isLocationEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+
+                    when {
+                        bluetoothAdapter == null -> {
+                            showAlert(context, "Bluetooth non supporté", "Ce dispositif ne supporte pas le Bluetooth.")
+                        }
+                        !bluetoothAdapter.isEnabled -> {
+                            showAlert(context, "Bluetooth désactivé", "Veuillez activer le Bluetooth pour continuer.")
+                        }
+                        !isLocationEnabled -> {
+                            showAlert(context, "Localisation désactivée", "Veuillez activer la localisation pour scanner les appareils BLE.")
+                        }
+                        else -> {
+                            context.startActivity(Intent(context, ScanActivity::class.java))
+                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -101,8 +128,15 @@ fun HomeScreen() {
                 )
             }
 
-
-            Spacer(modifier = Modifier.height(40.dp)) // Ajoute de l’espace en bas
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
+}
+
+fun showAlert(context: Context, title: String, message: String) {
+    AlertDialog.Builder(context)
+        .setTitle(title)
+        .setMessage(message)
+        .setPositiveButton("OK", null)
+        .show()
 }
