@@ -1,5 +1,6 @@
 package fr.isen.improta.androidsmartdevice.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,8 +28,8 @@ fun ScanScreen(
     remainingTime: Int,
     onStartScan: () -> Unit,
     onStopScan: () -> Unit,
-    onBack: () -> Unit
-
+    onBack: () -> Unit,
+    onDeviceClick: (BLEDevice) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -77,7 +78,6 @@ fun ScanScreen(
             Divider(modifier = Modifier.padding(bottom = 12.dp))
 
             if (devices.isEmpty()) {
-                // Nouveau design pour l'état vide
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -86,24 +86,15 @@ fun ScanScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
-                            imageVector = Icons.Filled.Bluetooth, // tu peux aussi utiliser une image custom
+                            imageVector = Icons.Filled.Bluetooth,
                             contentDescription = "Bluetooth",
                             tint = Color(0xFF1976D2),
                             modifier = Modifier.size(64.dp)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "Aucun appareil détecté",
-                            fontSize = 16.sp,
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Text("Aucun appareil détecté", fontSize = 16.sp, color = Color.Gray)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            "Assurez-vous que vos appareils BLE sont allumés",
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
+                        Text("Assurez-vous que vos appareils BLE sont allumés", fontSize = 14.sp, color = Color.Gray)
                     }
                 }
             } else {
@@ -112,7 +103,9 @@ fun ScanScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(devices) { device ->
-                        BLEDeviceItem(device)
+                        BLEDeviceItem(device) {
+                            onDeviceClick(device)
+                        }
                     }
                 }
             }
@@ -120,12 +113,12 @@ fun ScanScreen(
     }
 }
 
-
 @Composable
-fun BLEDeviceItem(device: BLEDevice) {
+fun BLEDeviceItem(device: BLEDevice, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -146,16 +139,8 @@ fun BLEDeviceItem(device: BLEDevice) {
         Spacer(modifier = Modifier.width(16.dp))
 
         Column {
-            Text(
-                text = device.name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = device.address,
-                fontSize = 14.sp,
-                color = Color.Gray
-            )
+            Text(device.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(device.address, fontSize = 14.sp, color = Color.Gray)
         }
     }
 }

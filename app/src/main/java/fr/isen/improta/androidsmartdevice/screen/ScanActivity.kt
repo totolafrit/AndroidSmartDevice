@@ -2,12 +2,12 @@ package fr.isen.improta.androidsmartdevice.screen
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -18,15 +18,8 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import fr.isen.improta.androidsmartdevice.ui.theme.AndroidSmartDeviceTheme
 
@@ -45,12 +38,8 @@ class ScanActivity : ComponentActivity() {
         if (result.all { it.value }) {
             launchScanUI()
         } else {
-            setContent {
-                AndroidSmartDeviceTheme {
-                    PermissionDeniedScreen {
-                    }
-                }
-            }
+            Toast.makeText(this, "Permissions refusées", Toast.LENGTH_LONG).show()
+            finish()
         }
     }
 
@@ -65,15 +54,13 @@ class ScanActivity : ComponentActivity() {
     }
 
     private fun requiredPermissions(): Array<String> {
-        val basePermissions = mutableListOf(
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
+        val basePermissions = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            basePermissions.add(Manifest.permission.BLUETOOTH_SCAN)
-            basePermissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+            basePermissions += Manifest.permission.BLUETOOTH_SCAN
+            basePermissions += Manifest.permission.BLUETOOTH_CONNECT
         } else {
-            basePermissions.add(Manifest.permission.BLUETOOTH)
-            basePermissions.add(Manifest.permission.BLUETOOTH_ADMIN)
+            basePermissions += Manifest.permission.BLUETOOTH
+            basePermissions += Manifest.permission.BLUETOOTH_ADMIN
         }
         return basePermissions.toTypedArray()
     }
@@ -100,6 +87,7 @@ class ScanActivity : ComponentActivity() {
 
         scanner = bluetoothAdapter.bluetoothLeScanner
         handler = Handler(Looper.getMainLooper())
+
         scanCallback = object : ScanCallback() {
             @SuppressLint("MissingPermission")
             override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -126,6 +114,15 @@ class ScanActivity : ComponentActivity() {
                     onBack = {
                         stopScan()
                         finish()
+                    },
+                    onDeviceClick = { device ->
+                        stopScan()
+                        val intent = Intent(this, DeviceActivity::class.java).apply {
+                            putExtra("name", device.name)
+                            putExtra("address", device.address)
+                            putExtra("rssi", device.rssi)
+                        }
+                        startActivity(intent)
                     }
                 )
             }
@@ -134,9 +131,6 @@ class ScanActivity : ComponentActivity() {
 
     @SuppressLint("MissingPermission")
     private fun startScan() {
-        Log.d("BLE", "startScan() appelé")
-        Toast.makeText(this, "Scan lancé", Toast.LENGTH_SHORT).show()
-
         if (isScanning.value) return
         devices.clear()
         remainingTime.value = 10
@@ -145,7 +139,6 @@ class ScanActivity : ComponentActivity() {
         scanner.startScan(scanCallback)
         Log.i("BLE", "Scan BLE démarré")
 
-        // Timer pour le compte à rebours
         Handler(Looper.getMainLooper()).post(object : Runnable {
             override fun run() {
                 if (isScanning.value && remainingTime.value > 0) {
@@ -159,44 +152,15 @@ class ScanActivity : ComponentActivity() {
     }
 
     private fun stopScan() {
-        Log.d("BLE", "stopScan() appelé")
-
         if (!isScanning.value) return
-
         try {
             scanner.stopScan(scanCallback)
-            Log.i("BLE", "Scan BLE arrêté")
         } catch (e: SecurityException) {
-            Log.e("BLE", "Erreur lors de l'arrêt du scan : ${e.message}")
+            Log.e("BLE", "Erreur arrêt scan : ${e.message}")
         }
-
         isScanning.value = false
         remainingTime.value = 0
         handler.removeCallbacksAndMessages(null)
-        Toast.makeText(this, "Scan arrêté", Toast.LENGTH_SHORT).show()
-    }
-}
-
-// UI affichée si permissions refusées
-@Composable
-fun PermissionDeniedScreen(onRetry: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Permissions refusées", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("L'application a besoin des permissions Bluetooth et Localisation pour fonctionner.")
-            Spacer(modifier = Modifier.height(32.dp))
-            Button(onClick = onRetry) {
-                Text("Réessayer")
-            }
-        }
+        Log.i("BLE", "Scan BLE arrêté")
     }
 }
